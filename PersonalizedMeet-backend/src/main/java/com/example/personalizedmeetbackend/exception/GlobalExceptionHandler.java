@@ -36,6 +36,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
+    @ExceptionHandler(MeetingParticipantNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMeetingParticipantNotFound(MeetingParticipantNotFoundException ex) {
+        ErrorResponse response = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(DuplicateMeetingParticipantException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateMeetingParticipant(DuplicateMeetingParticipantException ex) {
+        ErrorResponse response = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -53,3 +65,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 }
+
