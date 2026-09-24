@@ -1,0 +1,19 @@
+# Runtime environment
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Do not commit recordings, extracted audio, or model caches
+recordings/
+uploads/
+outputs/
+models/
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.webm
+*.avi
