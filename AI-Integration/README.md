@@ -19,12 +19,13 @@ Implemented in this phase:
 4. Timestamp overlap alignment.
 5. API endpoint for processing one recording.
 6. Structured JSON response with speaker labels, timestamps, and text.
+7. Speaker-wise transcripts grouped from the aligned segments.
+8. Deterministic meeting information extraction for repeated-keyword topics, decision-style statements, and action-oriented statements.
 
 Not implemented yet:
 
 - participant name mapping
 - speaker identity recognition
-- information extraction
 - sensitivity classification
 - privacy filtering
 - personalized summaries
@@ -86,6 +87,10 @@ Important settings:
 - `HUGGINGFACE_TOKEN`: required for pyannote diarization models.
 - `FFMPEG_PATH`: optional path to the FFmpeg executable. Defaults to `ffmpeg`.
 - `ALLOWED_RECORDING_ROOTS`: optional safety setting restricting readable recording paths.
+- `TOPIC_STOP_WORDS`: optional comma-separated words excluded from deterministic topic extraction.
+- `TOPIC_MIN_OCCURRENCES`: minimum occurrences required for a word to be returned as a topic. Defaults to `2`.
+- `DECISION_PATTERNS`: optional comma-separated phrases used to find source-backed decision statements.
+- `ACTION_ITEM_PATTERNS`: optional comma-separated phrases used to find source-backed action-item statements.
 
 Do not commit `.env` or real tokens.
 
@@ -147,8 +152,45 @@ Example response:
       "endTime": 12.4,
       "text": "The expansion proposal is ready."
     }
-  ]
+  ],
+  "speakers": [
+    {
+      "speaker": "SPEAKER_00",
+      "segments": [
+        {
+          "startTime": 0.0,
+          "endTime": 5.8,
+          "text": "Good morning everyone."
+        }
+      ],
+      "fullTranscript": "Good morning everyone."
+    }
+  ],
+  "meetingInformation": {
+    "topics": [],
+    "decisions": [],
+    "actionItems": [],
+    "peopleMentioned": []
+  }
 }
+```
+
+## Meeting Information Extraction
+
+After timestamp alignment, the service keeps the original `segments` response and also groups them into chronological, speaker-wise transcripts. It then derives basic meeting information from the transcript using deterministic rules only:
+
+- Topics are repeated meaningful words after configured stop words are excluded.
+- Decisions and action items are original segments matching configurable rule phrases, with their speaker and timestamps preserved.
+- `peopleMentioned` is currently empty by design; named-entity recognition is deferred rather than guessing names.
+
+This is a conservative factual layer, not semantic understanding. An LLM-based extraction service can later enhance or replace it without changing the transcription, diarization, or alignment pipeline.
+
+## Run Tests
+
+From this folder with the virtual environment activated:
+
+```powershell
+python -m pytest
 ```
 
 ## How Speech-to-Text Works

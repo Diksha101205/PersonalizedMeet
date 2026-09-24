@@ -43,6 +43,9 @@ def test_process_recording_reuses_extracted_wav_for_transcription_and_diarizatio
 
     assert response.recordingId == 123
     assert response.segments[0].speaker == "SPEAKER_00"
+    assert response.speakers[0].speaker == "SPEAKER_00"
+    assert response.speakers[0].fullTranscript == "Hello."
+    assert response.meetingInformation.peopleMentioned == []
     assert received_paths == [
         ("transcription", wav_path),
         ("diarization", wav_path),
