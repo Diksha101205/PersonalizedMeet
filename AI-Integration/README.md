@@ -21,12 +21,12 @@ Implemented in this phase:
 6. Structured JSON response with speaker labels, timestamps, and text.
 7. Speaker-wise transcripts grouped from the aligned segments.
 8. Deterministic meeting information extraction for repeated-keyword topics, decision-style statements, and action-oriented statements.
+9. Deterministic sensitivity classification for extracted decisions and action items.
 
 Not implemented yet:
 
 - participant name mapping
 - speaker identity recognition
-- sensitivity classification
 - privacy filtering
 - personalized summaries
 - LLM integration
@@ -91,6 +91,8 @@ Important settings:
 - `TOPIC_MIN_OCCURRENCES`: minimum occurrences required for a word to be returned as a topic. Defaults to `2`.
 - `DECISION_PATTERNS`: optional comma-separated phrases used to find source-backed decision statements.
 - `ACTION_ITEM_PATTERNS`: optional comma-separated phrases used to find source-backed action-item statements.
+- `DEFAULT_SENSITIVITY`: baseline sensitivity for an item with no matching signal. Defaults to `INTERNAL`.
+- `*_SENSITIVITY_PATTERNS`: optional comma-separated phrase groups used by the deterministic sensitivity classifier.
 
 Do not commit `.env` or real tokens.
 
@@ -171,7 +173,16 @@ Example response:
     "decisions": [],
     "actionItems": [],
     "peopleMentioned": []
-  }
+  },
+  "classifiedInformation": [
+    {
+      "text": "The approved expansion budget is INR 50 lakh.",
+      "speaker": "SPEAKER_01",
+      "startTime": 6.2,
+      "endTime": 12.4,
+      "sensitivity": "RESTRICTED"
+    }
+  ]
 }
 ```
 
@@ -184,6 +195,21 @@ After timestamp alignment, the service keeps the original `segments` response an
 - `peopleMentioned` is currently empty by design; named-entity recognition is deferred rather than guessing names.
 
 This is a conservative factual layer, not semantic understanding. An LLM-based extraction service can later enhance or replace it without changing the transcription, diarization, or alignment pipeline.
+
+## Sensitivity Classification
+
+After deterministic information extraction and before any future authorization or personalized-summary stage, the service classifies each extracted decision and action item. It does not reprocess recordings or create a second extraction path.
+
+Sensitivity levels are project-level labels, not legal or security guarantees:
+
+- `PUBLIC`: generally shareable with meeting participants.
+- `INTERNAL`: intended for the organization or team.
+- `CONFIDENTIAL`: requires an appropriate access level.
+- `RESTRICTED`: requires explicit authorization because it is highly sensitive.
+
+Rules are transparent and configurable through the sensitivity pattern settings. Explicit labels, credentials, and financial figures are considered alongside financial, personal, legal, HR, and strategic signals. When several rules match, the highest level wins: `RESTRICTED`, then `CONFIDENTIAL`, `INTERNAL`, and `PUBLIC`.
+
+This baseline classifier is deliberately conservative and deterministic. It is not a legal/security guarantee, and an LLM-based classifier may be evaluated later without changing the existing transcription and extraction pipeline.
 
 ## Run Tests
 

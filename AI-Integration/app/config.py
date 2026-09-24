@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _comma_separated_setting(name: str, default: str) -> tuple[str, ...]:
+    return tuple(value.strip() for value in os.getenv(name, default).split(",") if value.strip())
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "PersonalizedMeet AI Integration"
@@ -41,6 +45,25 @@ class Settings:
             "will do,need to,needs to,should,assigned to,responsible for,please,by tomorrow,by Monday",
         ).split(",")
         if pattern.strip()
+    )
+    default_sensitivity: str = os.getenv("DEFAULT_SENSITIVITY", "INTERNAL")
+    public_sensitivity_patterns: tuple[str, ...] = _comma_separated_setting(
+        "PUBLIC_SENSITIVITY_PATTERNS", "public"
+    )
+    internal_sensitivity_patterns: tuple[str, ...] = _comma_separated_setting(
+        "INTERNAL_SENSITIVITY_PATTERNS", "internal"
+    )
+    confidential_sensitivity_patterns: tuple[str, ...] = _comma_separated_setting(
+        "CONFIDENTIAL_SENSITIVITY_PATTERNS",
+        "confidential,budget,salary,compensation,revenue,profit,cost,pricing,payment,phone number,email,address,personal information,date of birth,legal case,lawsuit,litigation,contract,agreement,legal issue,compliance,employee complaint,disciplinary,termination,resignation,performance review,acquisition,merger,confidential strategy,unreleased product,business plan,expansion plan,internal strategy",
+    )
+    financial_sensitivity_patterns: tuple[str, ...] = _comma_separated_setting(
+        "FINANCIAL_SENSITIVITY_PATTERNS",
+        "budget,salary,compensation,revenue,profit,cost,pricing,payment,financial figures",
+    )
+    restricted_sensitivity_patterns: tuple[str, ...] = _comma_separated_setting(
+        "RESTRICTED_SENSITIVITY_PATTERNS",
+        "restricted,strictly confidential,highly confidential,password,api key,access token,private key,security key,credential,account number",
     )
     allowed_recording_roots: tuple[Path, ...] = tuple(
         Path(path).expanduser().resolve()
