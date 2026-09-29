@@ -22,6 +22,7 @@ Implemented in this phase:
 7. Speaker-wise transcripts grouped from the aligned segments.
 8. Deterministic meeting information extraction for repeated-keyword topics, decision-style statements, and action-oriented statements.
 9. Deterministic sensitivity classification for extracted decisions and action items.
+10. Deterministic authorization filtering after sensitivity classification.
 
 Not implemented yet:
 
@@ -182,7 +183,20 @@ Example response:
       "endTime": 12.4,
       "sensitivity": "RESTRICTED"
     }
-  ]
+  ],
+  "authorization": {
+    "participantRole": "MANAGER",
+    "authorizedInformation": [],
+    "filteredInformation": [
+      {
+        "text": "The approved expansion budget is INR 50 lakh.",
+        "speaker": "SPEAKER_01",
+        "startTime": 6.2,
+        "endTime": 12.4,
+        "sensitivity": "RESTRICTED"
+      }
+    ]
+  }
 }
 ```
 
@@ -210,6 +224,16 @@ Sensitivity levels are project-level labels, not legal or security guarantees:
 Rules are transparent and configurable through the sensitivity pattern settings. Explicit labels, credentials, and financial figures are considered alongside financial, personal, legal, HR, and strategic signals. When several rules match, the highest level wins: `RESTRICTED`, then `CONFIDENTIAL`, `INTERNAL`, and `PUBLIC`.
 
 This baseline classifier is deliberately conservative and deterministic. It is not a legal/security guarantee, and an LLM-based classifier may be evaluated later without changing the existing transcription and extraction pipeline.
+
+## Authorization Filtering
+
+Authorization runs after sensitivity classification and before any future personalized-summary stage. Supply an optional `participantRole` in the processing request to receive an `authorization` result. When it is omitted, authorization is not applied and the existing processing behavior remains unchanged.
+
+- `HOST`, `ORGANIZER`, and `SENIOR`: `PUBLIC`, `INTERNAL`, `CONFIDENTIAL`, and `RESTRICTED`.
+- `MANAGER`: `PUBLIC`, `INTERNAL`, and `CONFIDENTIAL`.
+- `PARTICIPANT`: `PUBLIC` and `INTERNAL`.
+
+The response leaves `classifiedInformation` unchanged and separates the evaluated role's `authorizedInformation` from `filteredInformation`. This is deterministic access control only; authentication, backend integration, and personalized summaries are intentionally not included.
 
 ## Run Tests
 

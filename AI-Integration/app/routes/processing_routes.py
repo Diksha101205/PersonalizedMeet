@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.models.schemas import ProcessRecordingRequest, ProcessRecordingResponse
+from app.services.authorization_service import AuthorizationService
 from app.services.diarization_service import DiarizationService
 from app.services.information_extraction_service import InformationExtractionService
 from app.services.sensitivity_classification_service import SensitivityClassificationService
@@ -15,9 +16,14 @@ diarization_service = DiarizationService()
 transcript_service = TranscriptService()
 information_extraction_service = InformationExtractionService()
 sensitivity_classification_service = SensitivityClassificationService()
+authorization_service = AuthorizationService()
 
 
-@router.post("/process-recording", response_model=ProcessRecordingResponse)
+@router.post(
+    "/process-recording",
+    response_model=ProcessRecordingResponse,
+    response_model_exclude_none=True,
+)
 def process_recording(request: ProcessRecordingRequest):
     recording_path = validate_recording_path(request.filePath)
     with extracted_wav(recording_path) as audio_path:
@@ -30,6 +36,11 @@ def process_recording(request: ProcessRecordingRequest):
     classified_information = sensitivity_classification_service.classify_information(
         meeting_information
     )
+    authorization = None
+    if request.participantRole is not None:
+        authorization = authorization_service.filter_information(
+            request.participantRole, classified_information
+        )
 
     return ProcessRecordingResponse(
         recordingId=request.recordingId,
@@ -37,4 +48,5 @@ def process_recording(request: ProcessRecordingRequest):
         speakers=speakers,
         meetingInformation=meeting_information,
         classifiedInformation=classified_information,
+        authorization=authorization,
     )

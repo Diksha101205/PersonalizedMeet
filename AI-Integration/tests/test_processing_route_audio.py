@@ -3,7 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.routes import processing_routes
-from app.models.schemas import ProcessRecordingRequest
+from app.models.schemas import ParticipantRole, ProcessRecordingRequest
 from app.services.diarization_service import DiarizationSegment
 from app.services.transcription_service import TranscriptionSegment
 
@@ -47,7 +47,43 @@ def test_process_recording_reuses_extracted_wav_for_transcription_and_diarizatio
     assert response.speakers[0].fullTranscript == "Hello."
     assert response.meetingInformation.peopleMentioned == []
     assert response.classifiedInformation == []
+    assert response.authorization is None
     assert received_paths == [
         ("transcription", wav_path),
         ("diarization", wav_path),
     ]
+
+
+def test_process_recording_adds_authorization_only_when_a_role_is_supplied(monkeypatch):
+    recording_path = Path("recording.mp4")
+    wav_path = Path("extracted.wav")
+
+    @contextmanager
+    def fake_extracted_wav(path):
+        yield wav_path
+
+    monkeypatch.setattr(processing_routes, "validate_recording_path", lambda file_path: recording_path)
+    monkeypatch.setattr(processing_routes, "extracted_wav", fake_extracted_wav)
+    monkeypatch.setattr(
+        processing_routes,
+        "transcription_service",
+        SimpleNamespace(transcribe=lambda path: []),
+    )
+    monkeypatch.setattr(
+        processing_routes,
+        "diarization_service",
+        SimpleNamespace(diarize=lambda path: []),
+    )
+
+    response = processing_routes.process_recording(
+        ProcessRecordingRequest(
+            recordingId=123,
+            filePath="C:/uploads/recording.mp4",
+            participantRole=ParticipantRole.PARTICIPANT,
+        )
+    )
+
+    assert response.authorization is not None
+    assert response.authorization.participantRole == ParticipantRole.PARTICIPANT
+    assert response.authorization.authorizedInformation == []
+    assert response.authorization.filteredInformation == []

@@ -28,3 +28,7 @@ class TranscriptionError(AiProcessingError):
 
 class DiarizationError(AiProcessingError):
     status_code = 500
+
+
+class InvalidParticipantRoleError(AiProcessingError):
+    status_code = 400
