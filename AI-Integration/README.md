@@ -86,6 +86,8 @@ Important settings:
 - `WHISPER_COMPUTE_TYPE`: `int8` for CPU-friendly use, or GPU-specific values if available.
 - `PYANNOTE_MODEL`: default is `pyannote/speaker-diarization-3.1`.
 - `HUGGINGFACE_TOKEN`: required for pyannote diarization models.
+- `GEMINI_API_KEY`: required only for personalized summary generation.
+- `GEMINI_MODEL`: Gemini model for personalized summaries. Defaults to `gemini-2.5-flash`.
 - `FFMPEG_PATH`: optional path to the FFmpeg executable. Defaults to `ffmpeg`.
 - `ALLOWED_RECORDING_ROOTS`: optional safety setting restricting readable recording paths.
 - `TOPIC_STOP_WORDS`: optional comma-separated words excluded from deterministic topic extraction.
@@ -233,7 +235,25 @@ Authorization runs after sensitivity classification and before any future person
 - `MANAGER`: `PUBLIC`, `INTERNAL`, and `CONFIDENTIAL`.
 - `PARTICIPANT`: `PUBLIC` and `INTERNAL`.
 
-The response leaves `classifiedInformation` unchanged and separates the evaluated role's `authorizedInformation` from `filteredInformation`. This is deterministic access control only; authentication, backend integration, and personalized summaries are intentionally not included.
+The response leaves `classifiedInformation` unchanged and separates the evaluated role's `authorizedInformation` from `filteredInformation`. This is deterministic access control only; authentication and backend integration are intentionally not included.
+
+## Personalized Summaries
+
+`POST /api/generate-personalized-summary` is a separate endpoint that accepts only information already authorized for one participant role. It does not accept recordings, recording paths, raw transcripts, classified-information collections, or filtered information.
+
+Set `GEMINI_API_KEY` locally in `.env`. The service uses `gemini-2.5-flash` by default and requests structured JSON containing `summary`, `keyPoints`, `decisions`, and `actionItems`.
+
+```json
+{
+  "participantRole": "MANAGER",
+  "authorizedInformation": [],
+  "authorizedDecisions": ["The restructuring will begin next month."],
+  "authorizedActionItems": ["Managers should prepare transition plans."],
+  "relevantTopics": ["team restructuring"]
+}
+```
+
+Gemini receives only these authorized request fields and is never asked to make authorization decisions.
 
 ## Run Tests
 

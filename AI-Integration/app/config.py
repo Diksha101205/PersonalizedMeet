@@ -20,6 +20,8 @@ class Settings:
     whisper_compute_type: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
     pyannote_model: str = os.getenv("PYANNOTE_MODEL", "pyannote/speaker-diarization-3.1")
     huggingface_token: str | None = os.getenv("HUGGINGFACE_TOKEN")
+    gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     ffmpeg_path: str = os.getenv("FFMPEG_PATH", "ffmpeg")
     topic_stop_words: frozenset[str] = frozenset(
         word.strip().lower()

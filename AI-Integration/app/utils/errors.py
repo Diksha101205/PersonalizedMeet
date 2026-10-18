@@ -32,3 +32,23 @@ class DiarizationError(AiProcessingError):
 
 class InvalidParticipantRoleError(AiProcessingError):
     status_code = 400
+
+
+class GeminiConfigurationError(AiProcessingError):
+    status_code = 500
+
+
+class GeminiGenerationError(AiProcessingError):
+    status_code = 502
+
+
+class GeminiQuotaExceededError(AiProcessingError):
+    status_code = 429
+
+
+class GeminiUnavailableError(AiProcessingError):
+    status_code = 503
+
+
+class InvalidGeminiResponseError(AiProcessingError):
+    status_code = 502

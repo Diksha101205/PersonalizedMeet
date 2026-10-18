@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.routes.personalized_summary_routes import router as personalized_summary_router
 from app.routes.processing_routes import router as processing_router
 from app.utils.errors import AiProcessingError
 
@@ -30,3 +31,4 @@ def health_check():
 
 
 app.include_router(processing_router)
+app.include_router(personalized_summary_router)
